@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explainable AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image: url('https://images.unsplash.com/photo-1526378722484-bd91ca387e72?fit=crop&w=1950&q=80');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .glass {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+    }
+  </style>
+</head>
+<body class="text-white font-inter min-h-screen flex flex-col items-center justify-center px-4 py-10">
+  <header class="w-full py-6 text-center">
+    <h1 class="text-4xl font-bold text-blue-400 animate-pulse">Explainable AI</h1>
+  </header>
+
+  <!-- Main Section -->
+  <main class="w-full max-w-6xl glass p-8 rounded-2xl shadow-2xl flex flex-col lg:flex-row items-center gap-10">
+    <!-- Upload Form -->
+    <div class="w-full lg:w-1/2">
+      <h2 class="text-2xl font-semibold mb-4">Upload Image or Video</h2>
+      <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*,video/*" required class="block w-full mb-4 text-sm text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+        <button type="submit" class="w-full bg-blue-600 text-white font-semibold py-2 rounded-xl shadow-md hover:bg-blue-700 transition-all">Upload</button>
+      </form>
+
+      <!-- Display Image -->
+      <div id="image-container" class="mt-6 hidden">
+        <h4 class="text-lg font-medium mb-2">Processed Image:</h4>
+        <img id="processed-image" src="" alt="Processed Image" class="rounded-lg shadow-md max-w-full">
+      </div>
+
+      <!-- Display Video -->
+      <div id="video-container" class="mt-6 hidden">
+        <h4 class="text-lg font-medium mb-2">Processed Video:</h4>
+        <video id="processed-video" controls class="w-full rounded-lg shadow-md">
+          <source id="video-source" src="" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+
+    <!-- Display Relationships -->
+    <div class="w-full lg:w-1/2">
+      <h3 class="text-2xl font-semibold mb-4">Analysis Results:</h3>
+      <div id="relationships" class="text-gray-200 whitespace-pre-line"></div>
+    </div>
+  </main>
+
+  <script>
+    document.getElementById('upload-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const fileInput = document.querySelector('input[type="file"]');
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      fetch('/upload_file', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        const relationshipsDiv = document.getElementById('relationships');
+        relationshipsDiv.innerHTML = '<strong>Relationships:</strong><br>' + (data.relationships || []).join('<br>');
+
+        const imageContainer = document.getElementById('image-container');
+        const videoContainer = document.getElementById('video-container');
+
+        if (data.image) {
+          document.getElementById('processed-image').src = 'data:image/jpeg;base64,' + data.image;
+          imageContainer.classList.remove('hidden');
+          videoContainer.classList.add('hidden');
+        } else if (data.video_url) {
+          const video = document.getElementById('processed-video');
+          const source = document.getElementById('video-source');
+          source.src = data.video_url;
+          video.load();
+          videoContainer.classList.remove('hidden');
+          imageContainer.classList.add('hidden');
+        } else {
+          imageContainer.classList.add('hidden');
+          videoContainer.classList.add('hidden');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to process the file.');
+      });
+    });
+  </script>
+</body>
+</html>
